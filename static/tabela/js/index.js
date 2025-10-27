@@ -1,10 +1,17 @@
 import { Box, Pelicula } from "./classes/Box.js"
 import { Mensagem_Temporaria } from "./classes/Mensagem_Temp.js"
 import { Tabela } from "./classes/Tabela.js"
-import { div, funcao_fetch, getAnoMesAtual, getMesNome, input_element, inserir_tres_pontinhos, label, mesAnterior, validacao_dados_do_fetch } from "./global_functions.js"
-import { buscar_no_indexedDB, existe_tabela, pegar_versao_iDB, salvar_base_no_indexedDB, salvar_info_no_indexedDB, salvar_ou_adicionar_no_indexedDB } from "./indexedDB_funcs.js"
+import { div, funcao_fetch, getAnoMesAtual, getMesNome, 
+  input_element, inserir_tres_pontinhos, label, 
+  mesAnterior, style, validacao_dados_do_fetch
+} from "./global_functions.js"
 
-indexedDB.deleteDatabase("fechamento")
+const valid = {}
+const funcoes_chamadas = {}
+const valores_final = {}
+const colunas = [
+  "SEQ", "TIPO","INICIAL","ENTRADAS","DEVOLUÇÕES","REQUISIÇÕES","CPI","CPV","AJUSTES","FINAL","DIFERENÇA"
+]
 
 // constrói a faixa superior de título, chama com timeout para criar o efeito da tela inicial
 setTimeout(() => {
@@ -95,10 +102,6 @@ function construir_tabela(per) {
     const table = document.createElement("table")
     div_table.append(table)
 
-    const colunas = [
-      "SEQ", "TIPO","INICIAL","ENTRADAS","DEVOLUÇÕES","REQUISIÇÕES","CPI","CPV","AJUSTES","FINAL"
-    ]
-
     const thead = document.createElement("thead")
     table.append(thead)
     
@@ -176,23 +179,10 @@ async function trazer_inicial(per) {
       new Mensagem_Temporaria("temp_info", "A consulta (Inicial) retornou vazia.")
       return
     }
-    
-    // if (dados.iniciais && dados.iniciais.length > 0) {
-    //   if (await existe_tabela("fechamento","iniciais_itens")) {
-    //     dados.iniciais.forEach((row) => {
-    //       salvar_info_no_indexedDB("fechamento","iniciais_itens",row)
-    //     })
-    //   } else {
-    //     salvar_ou_adicionar_no_indexedDB("fechamento",pegar_versao_iDB(true),dados.iniciais,"iniciais_itens",[
-    //       ["periodo_tipo",["periodo","Tipo"]]
-    //     ])
-    //   }
-    // }
 
     
     tipos.map(async (tp) => {
       const base_tp = dados.iniciais
-      // await buscar_no_indexedDB("fechamento","iniciais_itens","periodo_tipo",[[String(per).replace("-",""),tp]])
       
       if (base_tp && base_tp.length > 0) {
         const custo_soma = base_tp.reduce((acc,row) => {
@@ -201,6 +191,18 @@ async function trazer_inicial(per) {
           }
           return acc
         },0)
+
+        // COL DIFERENÇA
+        if (!valid[per_atual]){
+          valid[per_atual] = {}
+        }
+        if (!valid[per_atual][tp]){
+          valid[per_atual][tp] = 0
+        }
+        valid[per_atual][tp] += custo_soma
+        document.querySelector(`td[name='${per_atual}|${tp}|DIFERENÇA']`).innerText = 
+          valid[per_atual][tp].toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+        
 
         const td = document.querySelector(`td[name='${per_atual}|${tp}|INICIAL']`)
 
@@ -217,6 +219,11 @@ async function trazer_inicial(per) {
       }
 
     })
+
+    const evento = new CustomEvent("fechamento_funcao", {detail: {periodo: per_atual}})
+    if (!funcoes_chamadas[per_atual]) funcoes_chamadas[per_atual] = {}
+    funcoes_chamadas[per_atual]["trazer_inicial"] = true
+    document.dispatchEvent(evento)
     
   } catch (e) {
     new Mensagem_Temporaria("temp_erro",String(e))
@@ -225,43 +232,6 @@ async function trazer_inicial(per) {
   
 }
 
-async function abre_detalhe(nome_tabela, per, tp, titulo) {
-
-  if (!titulo) titulo = ""
-  
-  const pelicula = new Pelicula(undefined, undefined, "escuro").el
-  const box_detalhe = new Box("detalhe_fechamento",pelicula,{})
-  
-  box_detalhe.titulo(`${titulo} - Detalhes de ${formata_mes_e_ano(per)} em ${tp}`,{},"color-black")
-  box_detalhe.botao_fechar(["hover-color-vermelho","color-black"])
-
-  const base = await buscar_no_indexedDB("fechamento",nome_tabela,"periodo_tipo",[[per.replace("-",""),tp]])
-  
-  new Tabela(base,box_detalhe.el,undefined,{
-    botao_fechar:false,
-    excel:true,
-  },undefined,{
-    cols: {
-      "Valor": (td, row) => {
-        td.innerText = row.Valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-      },
-      "Custo": (td, row) => {
-        td.innerText = row.Custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-      },
-      "Total": (td, row) => {
-        td.innerText = row.Total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-      },
-      "Quantidade": (td, row) => {
-        td.innerText = row.Quantidade.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 5 })
-      },
-      "Qini": (td, row) => {
-        td.innerText = row.Qini.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 5 })
-      },
-    }
-  })
-  
-  
-}
 
 function formata_mes_e_ano(per) {
   const [ano, mes] = (String(per || "").includes("-") ? String(per).split("-") : ["", ""]);
@@ -320,6 +290,17 @@ async function trazer_entradas(per) {
           return acc
         },0)
 
+        // COL DIFERENÇA
+        if (!valid[per]){
+          valid[per] = {}
+        }
+        if (!valid[per][tp]){
+          valid[per][tp] = 0
+        }
+        valid[per][tp] += custo_soma
+        document.querySelector(`td[name='${per}|${tp}|DIFERENÇA']`).innerText = 
+          valid[per][tp].toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+
 
         td.innerText = custo_soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -336,6 +317,11 @@ async function trazer_entradas(per) {
       }
 
     })
+
+    const evento = new CustomEvent("fechamento_funcao", {detail: {periodo: per}})
+    if (!funcoes_chamadas[per]) funcoes_chamadas[per] = {}
+    funcoes_chamadas[per]["trazer_entradas"] = true
+    document.dispatchEvent(evento)
     
   } catch (e) {
     new Mensagem_Temporaria("temp_erro",String(e))
@@ -395,6 +381,19 @@ async function trazer_inicial_GGF(per) {
           return acc
         },0)
 
+
+        // COL DIFERENÇA
+        if (!valid[per_atual]){
+          valid[per_atual] = {}
+        }
+        if (!valid[per_atual][tp]){
+          valid[per_atual][tp] = 0
+        }
+        valid[per_atual][tp] += custo_soma
+        document.querySelector(`td[name='${per_atual}|${tp}|DIFERENÇA']`).innerText = 
+          valid[per_atual][tp].toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+        
+
         const td = document.querySelector(`td[name='${per_atual}|${tp}|INICIAL']`)
 
         td.innerText = custo_soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -410,6 +409,11 @@ async function trazer_inicial_GGF(per) {
       }
 
     })
+
+    const evento = new CustomEvent("fechamento_funcao", {detail: {periodo: per_atual}})
+    if (!funcoes_chamadas[per_atual]) funcoes_chamadas[per_atual] = {}
+    funcoes_chamadas[per_atual]["trazer_inicial_GGF"] = true
+    document.dispatchEvent(evento)
     
   } catch (e) {
     new Mensagem_Temporaria("temp_erro",String(e))
@@ -470,6 +474,19 @@ async function trazer_devolucoes(per) {
           return acc
         },0)
 
+
+        // COL DIFERENÇA
+        if (!valid[per]){
+          valid[per] = {}
+        }
+        if (!valid[per][tp]){
+          valid[per][tp] = 0
+        }
+        valid[per][tp] += custo_soma
+        document.querySelector(`td[name='${per}|${tp}|DIFERENÇA']`).innerText = 
+          valid[per][tp].toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+        
+
         const td = document.querySelector(`td[name='${per}|${tp}|DEVOLUÇÕES']`)
 
         td.innerText = custo_soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -485,6 +502,11 @@ async function trazer_devolucoes(per) {
       }
 
     })
+
+    const evento = new CustomEvent("fechamento_funcao", {detail: {periodo: per}})
+    if (!funcoes_chamadas[per]) funcoes_chamadas[per] = {}
+    funcoes_chamadas[per]["trazer_devolucoes"] = true
+    document.dispatchEvent(evento)
     
   } catch (e) {
     new Mensagem_Temporaria("temp_erro",String(e))
@@ -549,6 +571,25 @@ async function trazer_CPI(per) {
         },{"Custo":0,"CustoGGF":0})
 
 
+        // COL DIFERENÇA
+        if (!valid[per]){
+          valid[per] = {}
+        }
+        if (!valid[per][tp]){
+          valid[per][tp] = 0
+        }
+        valid[per][tp] += custo_soma["Custo"]
+        document.querySelector(`td[name='${per}|${tp}|DIFERENÇA']`).innerText = 
+          valid[per][tp].toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+
+        if (!valid[per][`${tp}-GGF`]){
+          valid[per][`${tp}-GGF`] = 0
+        }
+        valid[per][`${tp}-GGF`] += custo_soma["CustoGGF"]
+        document.querySelector(`td[name='${per}|${tp}-GGF|DIFERENÇA']`).innerText = 
+          valid[per][`${tp}-GGF`].toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+
+
         td.innerText = custo_soma["Custo"].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
         tdGGF.innerText = custo_soma["CustoGGF"].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -569,6 +610,11 @@ async function trazer_CPI(per) {
 
     })
     
+    const evento = new CustomEvent("fechamento_funcao", {detail: {periodo: per}})
+    if (!funcoes_chamadas[per]) funcoes_chamadas[per] = {}
+    funcoes_chamadas[per]["trazer_CPI"] = true
+    document.dispatchEvent(evento)
+
   } catch (e) {
     new Mensagem_Temporaria("temp_erro",String(e))
     console.error(e)
@@ -632,6 +678,25 @@ async function trazer_CPV(per) {
         },{"Custo":0,"CustoGGF":0})
 
 
+        // COL DIFERENÇA
+        if (!valid[per]){
+          valid[per] = {}
+        }
+        if (!valid[per][tp]){
+          valid[per][tp] = 0
+        }
+        valid[per][tp] += custo_soma["Custo"]
+        document.querySelector(`td[name='${per}|${tp}|DIFERENÇA']`).innerText = 
+          valid[per][tp].toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+
+        if (!valid[per][`${tp}-GGF`]){
+          valid[per][`${tp}-GGF`] = 0
+        }
+        valid[per][`${tp}-GGF`] += custo_soma["CustoGGF"]
+        document.querySelector(`td[name='${per}|${tp}-GGF|DIFERENÇA']`).innerText = 
+          valid[per][`${tp}-GGF`].toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+
+
         td.innerText = custo_soma["Custo"].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
         tdGGF.innerText = custo_soma["CustoGGF"].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -651,6 +716,11 @@ async function trazer_CPV(per) {
       }
 
     })
+
+    const evento = new CustomEvent("fechamento_funcao", {detail: {periodo: per}})
+    if (!funcoes_chamadas[per]) funcoes_chamadas[per] = {}
+    funcoes_chamadas[per]["trazer_CPV"] = true
+    document.dispatchEvent(evento)
     
   } catch (e) {
     new Mensagem_Temporaria("temp_erro",String(e))
@@ -710,6 +780,10 @@ async function trazer_final(per) {
           return acc
         },0)
 
+        // ALIMENTA valores_final PARA CALCULAR A DIFERENÇA
+        valores_final[per] ??= {}
+        valores_final[per][tp] = custo_soma
+
         td.innerText = custo_soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
         if (td) {
@@ -722,6 +796,11 @@ async function trazer_final(per) {
       }
 
     })
+
+    const evento = new CustomEvent("fechamento_funcao", {detail: {periodo: per}})
+    if (!funcoes_chamadas[per]) funcoes_chamadas[per] = {}
+    funcoes_chamadas[per]["trazer_final"] = true
+    document.dispatchEvent(evento)
     
   } catch (e) {
     new Mensagem_Temporaria("temp_erro",String(e))
@@ -767,6 +846,18 @@ async function trazer_requisicoes(per) {
         },0)
 
 
+        // COL DIFERENÇA
+        if (!valid[per]){
+          valid[per] = {}
+        }
+        if (!valid[per][tp]){
+          valid[per][tp] = 0
+        }
+        valid[per][tp] += custo_soma
+        document.querySelector(`td[name='${per}|${tp}|DIFERENÇA']`).innerText = 
+          valid[per][tp].toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+
+
         td.innerText = custo_soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
         if (td) {
@@ -782,6 +873,11 @@ async function trazer_requisicoes(per) {
       }
 
     })
+
+    const evento = new CustomEvent("fechamento_funcao", {detail: {periodo: per}})
+    if (!funcoes_chamadas[per]) funcoes_chamadas[per] = {}
+    funcoes_chamadas[per]["trazer_requisicoes"] = true
+    document.dispatchEvent(evento)
     
   } catch (e) {
     new Mensagem_Temporaria("temp_erro",String(e))
@@ -873,6 +969,18 @@ async function trazer_ajustes(per) {
         },0)
 
 
+        // COL DIFERENÇA
+        if (!valid[per]){
+          valid[per] = {}
+        }
+        if (!valid[per][tp]){
+          valid[per][tp] = 0
+        }
+        valid[per][tp] += custo_soma
+        document.querySelector(`td[name='${per}|${tp}|DIFERENÇA']`).innerText = 
+          valid[per][tp].toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+
+
         td.innerText = custo_soma.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
         if (td) {
@@ -890,10 +998,115 @@ async function trazer_ajustes(per) {
       }
 
     })
+
+    const evento = new CustomEvent("fechamento_funcao", {detail: {periodo: per}})
+    if (!funcoes_chamadas[per]) funcoes_chamadas[per] = {}
+    funcoes_chamadas[per]["trazer_ajustes"] = true
+    document.dispatchEvent(evento)
     
   } catch (e) {
     new Mensagem_Temporaria("temp_erro",String(e))
     console.error(e)
   }
+  
+}
+
+document.addEventListener("fechamento_funcao", (e) => {
+
+  const per = e.detail.periodo
+  
+  if (
+    funcoes_chamadas[per]["trazer_inicial"] &&
+    funcoes_chamadas[per]["trazer_entradas"] &&
+    funcoes_chamadas[per]["trazer_inicial_GGF"] &&
+    funcoes_chamadas[per]["trazer_devolucoes"] &&
+    funcoes_chamadas[per]["trazer_CPI"] &&
+    funcoes_chamadas[per]["trazer_CPV"] &&
+    funcoes_chamadas[per]["trazer_final"] &&
+    funcoes_chamadas[per]["trazer_requisicoes"] &&
+    funcoes_chamadas[per]["trazer_ajustes"]
+  ) {
+    edita_coluna_diferenca(per)
+  }
+})
+
+function edita_coluna_diferenca(per) {
+
+  const tipos = ["AL","MP","MI","PI","PA","PI-GGF","PA-GGF"]
+  
+  tipos.map((tp) => {
+    const td = document.querySelector(`td[name='${per}|${tp}|DIFERENÇA']`)
+    const dif = (valid[per][tp] - valores_final[per][tp])
+    td.innerText = 
+      dif.toLocaleString("pt-BR", {style:"currency",currency: "BRL"})
+    
+    style(td,{
+      opacity: "0",
+      transition: "all 300ms ease-in-out",
+    })
+
+    setTimeout(() => {
+      style(td,{
+        opacity: "1",
+        fontWeight: "bold",
+        color: (dif > 10 | dif < -10) ? "lightcoral" : "forestgreen"
+      })
+    },100)
+
+    
+  })
+  
+  const celulas = [] // para abrir (animação)
+  const totais = {}
+  const tbody = document.querySelector(`#table-${per}`).querySelector("tbody")
+  const tr = document.createElement("tr")
+  tr.setAttribute("name",`${per}|TOTAL`)
+  tbody.append(tr)
+
+  const td_seq = document.createElement("td")
+  td_seq.setAttribute("name",`${per}|TOTAL|SEQ`)
+  td_seq.classList.add("linha-total")
+  tr.append(td_seq)
+  celulas.push(td_seq)
+
+  const td_tipo = document.createElement("td")
+  td_tipo.setAttribute("name",`${per}|TOTAL|TIPO`)
+  td_tipo.classList.add("linha-total")
+  tr.append(td_tipo)
+  celulas.push(td_tipo)
+  td_tipo.innerText = "TOTAL"
+
+  colunas.map((col) => {
+    
+    if (["SEQ","TIPO"].includes(col)) return
+
+    tipos.map((tp) => {
+      
+      let numero = 0.0
+      const td_total = document.querySelector(`td[name='${per}|${tp}|${col}']`)
+      
+      if (td_total && td_total.innerText !== "-") {
+        const texto_num = td_total.innerText
+        numero = parseFloat(texto_num.replace(/[^\d,-]/g, '').replace('.', '').replace(',', '.'))// * (texto_num.includes('-') ? -1 : 1)
+      }
+      totais[col] = (totais[col] || 0) + numero
+      
+    })
+    
+
+    const td_total = document.createElement("td")
+    td_total.setAttribute("name",`${per}|TOTAL|${col}`)
+    td_total.classList.add("linha-total")
+    td_total.innerText = (totais[col] || 0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+    tr.append(td_total)
+    celulas.push(td_total)
+    
+  })
+
+  setTimeout(() => {
+    celulas.map((cel) => {
+      cel.style.opacity = "1"
+    })
+  }, 200)
   
 }

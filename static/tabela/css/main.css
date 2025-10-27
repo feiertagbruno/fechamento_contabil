@@ -163,3 +163,10 @@ input[type="password"] {
 .flex-flow-column {
   flex-flow: column;
 }
+
+.linha-total {
+  font-weight: bold;
+  border-top: 2px ridge darkolivegreen;
+  opacity: 0;
+  transition: all 500ms ease-in-out;
+}
