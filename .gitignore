@@ -1,0 +1,10 @@
+venv
+.env
+*xlsx
+testes*
+**/__pycache__
+*pycache*
+__pycache__
+db/*
+media
+node_modules

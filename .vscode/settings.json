@@ -1,0 +1,65 @@
+{
+	"editor.fontSize": 13,
+	"python.languageServer": "Pylance", // ms-python.vscode-pylance
+	"python.testing.unittestEnabled": false, // ms-python.python
+	"python.testing.pytestEnabled": true,
+	"python.testing.pytestArgs": [], // -x to bail
+	"python.defaultInterpreterPath": "venv\\Scripts\\python.exe",
+	"flake8.args": ["--config=${workspaceFolder}/.flake8"],
+	"javascript.suggestionActions.enabled": true,
+	"emmet.triggerExpansionOnTab": true,
+	"editor.tabSize": 2,
+	"editor.insertSpaces": true,
+	"github.copilot.enable": {
+		"*": false,
+		"plaintext": false,
+		"markdown": false,
+		"scminput": false
+	},
+	"[python]": {
+		"editor.tabSize": 4,
+		"editor.insertSpaces": true,
+	},
+	"[html]": {
+	  "editor.defaultFormatter": "vscode.html-language-features",
+	  "editor.quickSuggestions": {
+		"other": true,
+		"comments": true,
+		"strings": true
+	  }
+	},
+	"[django-html]": {
+	  "editor.formatOnSave": false,
+	  "editor.defaultFormatter": "vscode.html-language-features",
+	  "editor.quickSuggestions": {
+		"other": true,
+		"comments": true,
+		"strings": true
+	  }
+	},
+	"[javascript]": {
+		"editor.quickSuggestions": {
+			"other": true,
+			"comments": true,
+			"strings": true
+		},
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"files.associations": {
+	  "*.js": "javascript",
+	  "*.jsx": "javascriptreact",
+	  "*.xml": "html",
+	  "*.svg": "html",
+	  "*.html": "html",
+	  "django-html": "html", // batisteo.vscode-django
+	  "**/*.html": "html",
+	  "**/templates/**/*.html": "django-html",
+	  "**/base_templates/**/*.html": "django-html",
+	  "**/requirements{/**,*}.{txt,in}": "pip-requirements"
+	},
+	"emmet.includeLanguages": {
+	  "django-html": "html", // batisteo.vscode-django
+	  "javascript": "javascriptreact",
+	  "typescript": "typescriptreact"
+	}
+  }

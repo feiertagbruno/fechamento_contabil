@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static "tabela/css/main.css" %}">
+  <link rel="stylesheet" href="{% static "tabela/css/tres_pontinhos.css" %}">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <title>Fechamento Contábil</title>
+</head>
+<body class="jost">
+  <img id="logo" class="logo-astemo" src="https://www.astemo.com/shared/en/images/logo_astemo.png" alt="Logo da Astemo">
+
+  <div class="faixa-titulo">
+    <div class="titulo">Astemo - Fechamento Contábil</div>
+  </div>
+  
+  <script type="module" src="{% static "tabela/js/index.js" %}"></script>
+</body>
+</html>

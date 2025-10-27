@@ -1,0 +1,14 @@
+[flake8]
+max-line-length = 120
+exclude = .git,__pycache__,env,venv,.venv,migrations
+; ignore = E203, E266, E501, W503, F403, F401
+ignore = E231, E303, E202, E201, E266, W504, E226, E227, C901
+; E231 - Espaço depois da vírgula
+; E303 - Too many blank lines
+; E202 E201whitespace before ']'Flake8(E202) e E201
+; E266 too many leading '#' for block commentFlake8(E266)
+; W504 line break after binary operator
+; E226 espaço antes de sinal de mais ou menos ou * ou /
+; e227 missing whitespace around bitwise or shift operator
+max-complexity = 10
+select = B,C,E,F,W,T4,B9
