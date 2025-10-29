@@ -8,3 +8,4 @@ __pycache__
 db/*
 media
 node_modules
+wfastcgi.log

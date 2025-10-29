@@ -212,7 +212,7 @@ async function trazer_inicial(per) {
           
           td.classList.add("hover-background-vermelho")
 
-          td.addEventListener("click", () => abre_detalhe_base(base_tp,per,tp,"Saldos Iniciais"))
+          td.addEventListener("dblclick", () => abre_detalhe_base(base_tp,per,tp,"Saldos Iniciais"))
           
         }
 
@@ -308,7 +308,7 @@ async function trazer_entradas(per) {
           
           td.classList.add("hover-background-vermelho")
 
-          td.addEventListener("click", () => abre_detalhe_base(base_tp,per,tp,"Entradas"))
+          td.addEventListener("dblclick", () => abre_detalhe_base(base_tp,per,tp,"Entradas"))
           
         }
 
@@ -402,7 +402,7 @@ async function trazer_inicial_GGF(per) {
           
           td.classList.add("hover-background-vermelho")
 
-          td.addEventListener("click", () => abre_detalhe_base(base_tp,per,tp,"Saldos Iniciais_GGF"))
+          td.addEventListener("dblclick", () => abre_detalhe_base(base_tp,per,tp,"Saldos Iniciais_GGF"))
           
         }
 
@@ -493,7 +493,7 @@ async function trazer_devolucoes(per) {
 
         if (td) {
           td.classList.add("hover-background-vermelho")
-          td.addEventListener("click", () => abre_detalhe_base(base_tp,per,tp,"Devoluções"))
+          td.addEventListener("dblclick", () => abre_detalhe_base(base_tp,per,tp,"Devoluções"))
         }
 
       } else {
@@ -596,10 +596,10 @@ async function trazer_CPI(per) {
         if (td) {
           
           td.classList.add("hover-background-vermelho")
-          td.addEventListener("click", () => abre_detalhe_base(base_tp,per,tp,"CPI"))
+          td.addEventListener("dblclick", () => abre_detalhe_base(base_tp,per,tp,"CPI"))
 
           tdGGF.classList.add("hover-background-vermelho")
-          tdGGF.addEventListener("click", () => abre_detalhe_base(base_tp,per,tp,"CPI"))
+          tdGGF.addEventListener("dblclick", () => abre_detalhe_base(base_tp,per,tp,"CPI"))
           
         }
 
@@ -703,10 +703,10 @@ async function trazer_CPV(per) {
         if (td) {
           
           td.classList.add("hover-background-vermelho")
-          td.addEventListener("click", () => abre_detalhe_base(base_tp,per,tp,"CPV"))
+          td.addEventListener("dblclick", () => abre_detalhe_base(base_tp,per,tp,"CPV"))
 
           tdGGF.classList.add("hover-background-vermelho")
-          tdGGF.addEventListener("click", () => abre_detalhe_base(base_tp,per,tp,"CPV"))
+          tdGGF.addEventListener("dblclick", () => abre_detalhe_base(base_tp,per,tp,"CPV"))
           
         }
 
@@ -788,7 +788,7 @@ async function trazer_final(per) {
 
         if (td) {
           td.classList.add("hover-background-vermelho")
-          td.addEventListener("click", () => abre_detalhe_base(base_tp,per,tp.replace("-GGF",""),"Saldos Finais"))
+          td.addEventListener("dblclick", () => abre_detalhe_base(base_tp,per,tp.replace("-GGF",""),"Saldos Finais"))
         }
 
       } else {
@@ -863,7 +863,7 @@ async function trazer_requisicoes(per) {
         if (td) {
           
           td.classList.add("hover-background-vermelho")
-          td.addEventListener("click", () => abre_detalhe_base(base_tp,per,tp,"Requisições"))
+          td.addEventListener("dblclick", () => abre_detalhe_base(base_tp,per,tp,"Requisições"))
           
         }
 
@@ -887,7 +887,7 @@ async function trazer_requisicoes(per) {
 }
 
 function abre_detalhe_base(base_tp,per,tp,titulo) {
-
+  
   if (!titulo) titulo = ""
 
   const pelicula = new Pelicula(undefined, undefined, "escuro").el
@@ -986,7 +986,7 @@ async function trazer_ajustes(per) {
         if (td) {
           
           td.classList.add("hover-background-vermelho")
-          td.addEventListener("click", () => abre_detalhe_base(
+          td.addEventListener("dblclick", () => abre_detalhe_base(
             base_tp.sort((a,b) => a.Valor - b.Valor),
             per,tp.replace("-GGF",""),"Ajustes"
           ))
