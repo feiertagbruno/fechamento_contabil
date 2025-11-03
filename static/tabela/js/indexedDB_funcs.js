@@ -1,3 +1,5 @@
+import * as XLSX from "https://cdn.sheetjs.com/xlsx-latest/package/xlsx.mjs";
+
 let versao_iDB = 2
 
 export function salvar_base_no_indexedDB(nome_bd,versao,obj,nome_base,indexes) {
