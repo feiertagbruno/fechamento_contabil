@@ -11,7 +11,7 @@ from .queries import (
     query_iniciais_SB9_GGF, query_devolucoes_itens, query_CPI, query_CPV, query_final_SB2,
     query_requisicoes, query_ajustes
 )
-# from .utils.funcs import get_engine,enviar_email
+from .utils.funcs import get_engine
 
 
 def index(request):
