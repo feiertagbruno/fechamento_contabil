@@ -9,3 +9,5 @@ db/*
 media
 node_modules
 wfastcgi.log
+error.log
+db.sqlite3
