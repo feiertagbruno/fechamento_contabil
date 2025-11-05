@@ -11,7 +11,7 @@ from .queries import (
     query_iniciais_SB9_GGF, query_devolucoes_itens, query_CPI, query_CPV, query_final_SB2,
     query_requisicoes, query_ajustes
 )
-from .utils.funcs import get_engine
+from .utils.funcs import get_engine,enviar_email
 
 
 def index(request):
@@ -177,17 +177,64 @@ def trazer_final(request):
     if periodo > maior_fech:
         query = text(query_final_SB2())
         consulta = pd.read_sql(query, engine)
+        tabela = "SB2"
+        col_qtd = "Qfim"
     else:
         query = text(query_iniciais_SB9())
         consulta = pd.read_sql(query, engine, params={"periodo":periodo})
-
+        tabela = "SB9"
+        col_qtd = "Qini"
 
     if consulta.empty:
         return Response({"sucesso":True,"vazio":True})
+
+    ##################################
+    # VERIFICA QUANTIDADE ZERADA
+    qtd_zero = consulta.loc[consulta[col_qtd] == 0]
+    info = None
+    if not qtd_zero.empty:
+        consulta = consulta.loc[consulta["Qfim"] != 0]
+        info = f"""Existem produtos com a quantidade zerada e o valor positivo no período {periodo}.
+A função que gerou esta mensagem é trazer_final. A tabela que foi consultada é a {tabela}.
+"""
+#         enviar_email(
+#             "ricky.moraes.cd@astemo.com;bruno.martini.gh@astemo.com",
+#             "Quantidade zerada com valor dif zero",
+#             f"""
+# {info}
+# {str(qtd_zero["Item"].to_list())}
+# """
+#         )
+
+    ###################################
+
+    ###################################
+    # VERIFICA PRODUTOS NÃO 'PA' NO ARMAZEM 20
+
+    nao_PA_no_20 = consulta.loc[((consulta["Tipo"] != "PA") & (consulta["Armz"] == "20"))]
+    if not nao_PA_no_20.empty:
+        texto_nao_PA = f"""
+Existem itens que não são PA no armazém 20. Os itens são {nao_PA_no_20["Item"].to_list()}.
+Da tabela {tabela}. Período {periodo}.
+"""
+        if not info:
+            info = texto_nao_PA
+        else:
+            if isinstance(info,str):
+                info = [info, texto_nao_PA]
+            elif isinstance(info,list):
+                list(info).append(texto_nao_PA)
+
+    ###################################
+
     consulta["periodo"] = periodo
     consulta = consulta.to_dict("records")
 
-    return Response({"sucesso": True,"final":consulta})
+    response = {"sucesso": True,"final":consulta}
+    if info:
+        response["info"] = info
+
+    return Response(response)
 
 
 

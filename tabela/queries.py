@@ -115,6 +115,7 @@ SELECT
     D2_DOC Documento,
     D2_COD Item,
     D2_LOCAL Armz,
+    TRIM(D2_CF) CFOP,
     -D2_QUANT Quantidade,
     D2_TOTAL Total,
     D2_TES Tes,
@@ -174,9 +175,11 @@ CONSUMO AS (
     WHERE D3B.D_E_L_E_T_ = ''
         AND D3B.D3_ESTORNO <> 'S'
         AND LEFT(D3B.D3_EMISSAO,6) = @PER
-        AND D3B.D3_OP <> ''
         AND D3B.D3_FILIAL = '01'
-        AND D3B.D3_TM = '999'
+        AND (
+            (D3B.D3_OP <> '' AND D3B.D3_TM = '999') OR
+            (LEFT(D3B.D3_DOC,3) = 'DMI')
+        )
         AND D3_TIPO IN ('PI','PA')
     GROUP BY D3_COD
 ),
@@ -262,11 +265,11 @@ WHERE
     B2.D_E_L_E_T_ = ''
     AND B2_FILIAL = '01'
     AND B2_LOCAL BETWEEN '01' AND '50'
-    AND (
+    AND ROUND((
         ISNULL(B2_CPF0101,0) + ISNULL(B2_CPF0201,0) + ISNULL(B2_CPF0301,0) +
         ISNULL(B2_CPF0401,0) + ISNULL(B2_CPF0501,0) + ISNULL(B2_CPF0601,0) +
         ISNULL(B2_CPF0701,0) + ISNULL(B2_CPF0801,0) + ISNULL(B2_CPF0901,0)
-    ) <> 0
+    ),0) <> 0
 """
 
 
@@ -277,6 +280,16 @@ def query_requisicoes():
 SELECT TRIM(D3_COD) Item,
     TRIM(B1_DESC) Descricao,
     TRIM(B1_TIPO) Tipo,
+    TRIM(
+        CASE
+            WHEN LEFT(D3_DOC,3) = 'DMI' THEN 'DMI'
+            WHEN D3_DOC = 'INVENT' THEN 'INVENT'
+            WHEN UPPER(LEFT(D3_DOC,1)) = 'X' THEN 'X'
+            WHEN UPPER(LEFT(D3_DOC,2)) = 'AP' THEN 'AP'
+            WHEN UPPER(LEFT(D3_DOC,2)) = 'CQ' THEN 'CQ'
+            ELSE D3_DOC
+        END
+    ) Documento,
     SUM(
         CASE
             WHEN D3_TM > 500 THEN -D3_QUANT
@@ -289,7 +302,16 @@ SELECT TRIM(D3_COD) Item,
             -(ISNULL(D3_CP0101,0) + ISNULL(D3_CP0201,0) + ISNULL(D3_CP0301,0))
         WHEN D3_TM < 500 THEN
             ISNULL(D3_CP0101,0) + ISNULL(D3_CP0201,0) + ISNULL(D3_CP0301,0)
-    END) Valor
+    END) Valor,
+    SUM(CASE
+        WHEN B1_TIPO = 'PI' AND D3_TM > 500 THEN
+            -(ISNULL(D3_CP0401,0) + ISNULL(D3_CP0501,0) + ISNULL(D3_CP0601,0) +
+            ISNULL(D3_CP0701,0) + ISNULL(D3_CP0801,0) + ISNULL(D3_CP0901,0))
+        WHEN B1_TIPO = 'PI' AND D3_TM < 500 THEN
+            (ISNULL(D3_CP0401,0) + ISNULL(D3_CP0501,0) + ISNULL(D3_CP0601,0) +
+            ISNULL(D3_CP0701,0) + ISNULL(D3_CP0801,0) + ISNULL(D3_CP0901,0))
+        ELSE 0
+    END) ValorGGF
 FROM SD3010 (NOLOCK) D3
 INNER JOIN SB1010 (NOLOCK) B1
     ON B1.D_E_L_E_T_ = ''
@@ -298,10 +320,27 @@ INNER JOIN SB1010 (NOLOCK) B1
 WHERE D3.D_E_L_E_T_ = ''
     AND D3_ESTORNO <> 'S'
     AND LEFT(D3_EMISSAO,6) = :periodo
-    AND D3_CF NOT IN ('RE3','DE3','RE0','DE0')
-    AND B1_TIPO IN ('AL','MP','MI')
+    AND (D3_CF NOT IN ('RE3','DE3','RE0','DE0')
+        OR (
+            D3_CF IN ('RE0','DE0') AND (
+                LEFT(D3_DOC,3) = 'DMI' OR (D3_DOC = 'INVENT' AND D3_LOCAL = '14')
+            )
+        )
+    )
+    AND (
+        B1_TIPO IN ('AL','MP','MI')
+        OR (B1_TIPO = 'PI' AND D3_DOC = 'INVENT')
+    )
     AND D3_LOCAL BETWEEN '01' AND '50'
-GROUP BY D3_COD, B1_DESC, B1_TIPO
+GROUP BY D3_COD, B1_DESC, B1_TIPO,
+    CASE
+        WHEN LEFT(D3_DOC,3) = 'DMI' THEN 'DMI'
+        WHEN D3_DOC = 'INVENT' THEN 'INVENT'
+        WHEN UPPER(LEFT(D3_DOC,1)) = 'X' THEN 'X'
+        WHEN UPPER(LEFT(D3_DOC,2)) = 'AP' THEN 'AP'
+        WHEN UPPER(LEFT(D3_DOC,2)) = 'CQ' THEN 'CQ'
+        ELSE D3_DOC
+    END
 """
 
 
@@ -310,12 +349,9 @@ def query_ajustes():
 SELECT TRIM(D3_COD) Item,
     TRIM(B1_DESC) Descricao,
     TRIM(B1_TIPO) Tipo,
-    TRIM(
-        CASE
-            WHEN LEFT(D3_DOC,3) = 'DMI' THEN 'DMI'
-            ELSE D3_DOC
-        END
-    ) Documento,
+    TRIM(D3_TM) TM,
+    TRIM(D3_CF) CF,
+    TRIM(D3_DOC) Documento,
     SUM(
         CASE
             WHEN D3_TM > 500 THEN -D3_QUANT
@@ -352,8 +388,7 @@ WHERE D3.D_E_L_E_T_ = ''
     AND D3_CF IN ('RE0','DE0')
     AND B1_TIPO IN ('AL','MP','MI','PI','PA')
     AND D3_LOCAL BETWEEN '01' AND '50'
-GROUP BY CASE
-            WHEN LEFT(D3_DOC,3) = 'DMI' THEN 'DMI'
-            ELSE D3_DOC
-        END, B1_DESC, B1_TIPO, D3_COD
+    AND LEFT(D3_DOC,3) <> 'DMI'
+    AND NOT (D3_DOC = 'INVENT' AND D3_LOCAL = '14')
+GROUP BY D3_DOC, B1_DESC, B1_TIPO, D3_COD, D3_TM, D3_CF
 """

@@ -61,5 +61,16 @@
 	  "django-html": "html", // batisteo.vscode-django
 	  "javascript": "javascriptreact",
 	  "typescript": "typescriptreact"
-	}
+	},
+	"multiCommand.commands": [
+		{
+			"command": "multiCommand.insertCommaAndNewLine",
+			"sequence": [
+				"cursorEnd",
+				{ "command": "type", "args": { "text": "," } },
+				"editor.action.insertLineAfter",
+				"cursorEnd"
+			]
+		}
+	],
   }

@@ -15,6 +15,11 @@
             "django": true,
             "autoStartBrowser": true,
             "justMyCode": true,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "Starting development server at (https?://\\S+)",
+                // "uriFormat": "%s/l2l"
+            }
         }
     ]
 }

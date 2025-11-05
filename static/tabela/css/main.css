@@ -1,3 +1,8 @@
+:root {
+  --var-verde-claro: rgb(66, 121, 121);
+  --var-verde-mais-claro: rgb(72, 218, 218);
+}
+
 div {
   display: flex;
   flex-flow: row;
@@ -101,6 +106,7 @@ input[type="password"] {
 }
 
 .div-table {
+  position: relative;
   padding: 2rem 0 4rem 0;
   width: 80vw;
   margin: 0 auto;
@@ -109,7 +115,7 @@ input[type="password"] {
 
 .faixa-sup {
   height: 3rem;
-  background: rgb(66, 121, 121);
+  background: var(--var-verde-claro);
   width: 100%;
   border-radius: 10px 10px 0 0;
   color: white;
@@ -169,4 +175,34 @@ input[type="password"] {
   border-top: 2px ridge darkolivegreen;
   opacity: 0;
   transition: all 500ms ease-in-out;
+}
+
+.linha-de-subtotal {
+  background: linear-gradient(to bottom, white, lightblue);
+  font-weight: bold;
+  max-height: 4rem;
+  transition: all 500ms ease-in-out;
+  /* border-bottom: 2px solid black; */
+  /* border-top: 1px dashed gray; */
+}
+
+.texto-claro td {
+  color: lightgray !important;
+}
+
+.botao-mostrar {
+  place-self: center;
+  position: absolute;
+  place-self: anchor-center;
+  text-decoration: underline;
+  font-size: medium;
+  font-weight: bold;
+}
+
+.botao-x {
+  position: absolute;
+  top: -1rem;
+  right: 1rem;
+  font-size: large;
+  font-weight: bold;
 }

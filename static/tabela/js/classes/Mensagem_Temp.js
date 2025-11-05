@@ -14,10 +14,33 @@ export class Mensagem_Temporaria {
 
     this.transition_sec = 2
     this.segundos = segundos
-    const box_cls = new Box(tipo, document.body, {
+
+    // IDENTIFICAR OUTRAS MENSAGENS TEMPORARIAS PARA ADAPTAR A ALTURA
+    const mensagens = document.querySelectorAll("[name='mensagem_temporaria']")
+    let maior_mensagem = 0
+    if (mensagens.length) {
+      mensagens.forEach((mens) => {
+        if ((mens.offsetTop + mens.offsetHeight) > maior_mensagem) {
+          maior_mensagem = mens.offsetTop + mens.offsetHeight
+        }
+      })
+    }
+
+    let style_mens = {
       transition: `all ${this.transition_sec}s ease-in-out`,
       zIndex: "99999",
-    }, undefined, texto, undefined, undefined, "mensagem_temporaria")
+    }
+    if (maior_mensagem) {
+      style_mens = {
+        ...style_mens,
+        top: maior_mensagem + 10 + "px"
+      }
+    }
+    
+    const box_cls = new Box(
+      tipo, document.body, style_mens, 
+      undefined, texto, undefined, undefined, "mensagem_temporaria"
+    )
     this.btn_fechar = box_cls.botao_fechar()
     this.box = box_cls.el
 

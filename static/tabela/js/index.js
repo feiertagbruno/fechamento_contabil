@@ -113,8 +113,8 @@ function construir_tabela(per) {
 
     const seq_tipo = [
       ["01","AL"],["02","MP"],["03","MI"],
-      ["04","PI"],["05","PA"],
-      ["06","PI-GGF"],["07","PA-GGF"]
+      ["04","PI"],["05","PA"],["","TTL-MP"],
+      ["06","PI-GGF"],["07","PA-GGF"],["","TTL-GGF"]
     ]
 
     const tbody = document.createElement("tbody")
@@ -129,6 +129,9 @@ function construir_tabela(per) {
       colunas.map((col) => {
         const td = document.createElement("td")
         td.setAttribute("name", String(per) + "|" + String(tipo) + "|" + String(col))
+        if (tipo.includes("TTL")) {
+          style(td,undefined,"linha-de-subtotal")
+        }
 
         tr.append(td)
         td.innerText = "-"
@@ -143,6 +146,28 @@ function construir_tabela(per) {
       const tipo_el = document.querySelector(`td[name='${per}|${tipo}|TIPO']`)
       tipo_el.classList.add("main-col")
       tipo_el.innerText = tipo
+    })
+
+    div(
+      div_table,undefined,["botao-x","hover-color-vermelho"],"X"
+    ).addEventListener("click",() => {
+
+      delete valid[per]
+      
+      delete funcoes_chamadas[per]["trazer_inicial"]
+      delete funcoes_chamadas[per]["trazer_entradas"]
+      delete funcoes_chamadas[per]["trazer_inicial_GGF"]
+      delete funcoes_chamadas[per]["trazer_devolucoes"]
+      delete funcoes_chamadas[per]["trazer_CPI"]
+      delete funcoes_chamadas[per]["trazer_CPV"]
+      delete funcoes_chamadas[per]["trazer_final"]
+      delete funcoes_chamadas[per]["trazer_requisicoes"]
+      delete funcoes_chamadas[per]["trazer_ajustes"]
+
+      delete valores_final[per]
+      
+      div_table.remove()
+
     })
 
     return true
@@ -202,6 +227,8 @@ async function trazer_inicial(per) {
         valid[per_atual][tp] += custo_soma
         document.querySelector(`td[name='${per_atual}|${tp}|DIFERENÇA']`).innerText = 
           valid[per_atual][tp].toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+
+        // LIN TTL
         
 
         const td = document.querySelector(`td[name='${per_atual}|${tp}|INICIAL']`)
@@ -813,7 +840,7 @@ async function trazer_requisicoes(per) {
 
   try {
     
-    const tipos = ["AL","MP","MI"]
+    const tipos = ["AL","MP","MI","PI","PI-GGF"]
     tipos.map((tp) => {
       const td = document.querySelector(`td[name='${per}|${tp}|REQUISIÇÕES']`)
       inserir_tres_pontinhos(td)
@@ -836,11 +863,12 @@ async function trazer_requisicoes(per) {
 
       const td = document.querySelector(`td[name='${per}|${tp}|REQUISIÇÕES']`)
       const tdGGF = document.querySelector(`td[name='${per}|${tp}-GGF|REQUISIÇÕES']`)
+      const nome_col = tp === "PI-GGF" ? "ValorGGF" : "Valor"
       
       if (base_tp && base_tp.length > 0) {
         const custo_soma = base_tp.reduce((acc,row) => {
-          if (row.Tipo === tp) {
-            acc += row.Valor
+          if (row.Tipo === tp.replace("-GGF","")) {
+            acc += row[nome_col]
           }
           return acc
         },0)
@@ -1057,7 +1085,7 @@ function edita_coluna_diferenca(per) {
   })
   
   const celulas = [] // para abrir (animação)
-  const totais = {}
+  const totais = {"MP":{},"GGF":{}}
   const tbody = document.querySelector(`#table-${per}`).querySelector("tbody")
   const tr = document.createElement("tr")
   tr.setAttribute("name",`${per}|TOTAL`)
@@ -1089,7 +1117,9 @@ function edita_coluna_diferenca(per) {
         const texto_num = td_total.innerText
         numero = parseFloat(texto_num.replace(/[^\d,-]/g, '').replace('.', '').replace(',', '.'))// * (texto_num.includes('-') ? -1 : 1)
       }
-      totais[col] = (totais[col] || 0) + numero
+      
+      const mp_ou_ggf = (tp.includes("GGF")) ? "GGF" : "MP"
+      totais[mp_ou_ggf][col] = (totais[mp_ou_ggf][col] || 0) + numero
       
     })
     
@@ -1097,16 +1127,52 @@ function edita_coluna_diferenca(per) {
     const td_total = document.createElement("td")
     td_total.setAttribute("name",`${per}|TOTAL|${col}`)
     td_total.classList.add("linha-total")
-    td_total.innerText = (totais[col] || 0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+    td_total.innerText = (
+      (totais["MP"][col] || 0) + (totais["GGF"][col] || 0)
+    ).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
     tr.append(td_total)
     celulas.push(td_total)
+
+    const td_ttl_mp = tbody.querySelector(`td[name='${per}|TTL-MP|${col}']`)
+    td_ttl_mp.innerText = totais["MP"][col].toLocaleString("pt-BR", {style:"currency",currency:"BRL"})
+
+    const td_ttl_ggf = tbody.querySelector(`td[name='${per}|TTL-GGF|${col}']`)
+    td_ttl_ggf.innerText = totais["GGF"][col].toLocaleString("pt-BR", {style:"currency",currency:"BRL"})
     
   })
-
+  
+  esconder_ou_mostrar_ggf(tbody, per)
+  
   setTimeout(() => {
     celulas.map((cel) => {
       cel.style.opacity = "1"
     })
   }, 200)
   
+}
+
+function esconder_ou_mostrar_ggf(tbody, per) {
+
+    const todas_linhas = tbody.querySelectorAll("tr")
+    const linhas_ggf = []
+    let lin_ttl_ggf
+    todas_linhas.forEach((linha) => {
+      const name = linha.getAttribute("name")
+      if (name.includes("GGF")) {
+        linhas_ggf.push(linha)
+        linha.classList.add("texto-claro")
+      }
+      if (name.includes("TTL")) lin_ttl_ggf = linha
+    })
+    
+    style(lin_ttl_ggf,{position: "relative"})
+    const btn_mostrar = div(lin_ttl_ggf, undefined, ["botao-mostrar","hover-color-vermelho"],"Mostrar GGF")
+  
+    btn_mostrar.addEventListener("click", () => {
+      btn_mostrar.remove()
+      linhas_ggf.forEach(lin => {
+        lin.classList.remove("texto-claro")
+      })
+    })
+    
 }

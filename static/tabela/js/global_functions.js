@@ -1,3 +1,5 @@
+import { Mensagem_Temporaria } from "./classes/Mensagem_Temp.js"
+
 /**
  * 
  * @param {HTMLElement} append_el - Elemento para appendar a div que será criada.
@@ -8,6 +10,15 @@
  * @param {"beforebegin" | "afterbegin" | "beforeend" | "afterend"} tipo_insercao
  * @returns {HTMLElement}
  */
+
+let mouseX, mouseY
+export function getMousePos() {
+  return { x: mouseX, y: mouseY}
+}
+document.addEventListener("mousemove", (e) => {
+  mouseX = e.clientX
+  mouseY = e.clientY
+});
 
 export function div(append_el, styles, class_add, text, tipo_insercao="beforeend", id, name) {
 	const div_el = document.createElement("div")
@@ -207,8 +218,16 @@ export function validacao_dados_do_fetch(dados, texto_erro) {
     throw new Error(dados.erro || texto_erro)
   }
 
-  if (dados.info) {
-    new Mensagem_Temporaria("temp_info",dados.info)
+  if (dados.info && dados.info.length > 0) {
+		if (Array.isArray(dados.info)) {
+			dados.info.forEach((d) => {
+				new Mensagem_Temporaria("temp_info",d)
+				console.info(d)
+			})
+		} else {
+			new Mensagem_Temporaria("temp_info",dados.info)
+			console.info(dados.info)
+		}
   }
 
   if (dados.msg_sucesso) {
