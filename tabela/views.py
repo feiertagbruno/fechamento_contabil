@@ -193,7 +193,7 @@ def trazer_final(request):
     qtd_zero = consulta.loc[consulta[col_qtd] == 0]
     info = None
     if not qtd_zero.empty:
-        consulta = consulta.loc[consulta["Qfim"] != 0]
+        consulta = consulta.loc[consulta[col_qtd] != 0]
         info = f"""Existem produtos com a quantidade zerada e o valor positivo no período {periodo}.
 A função que gerou esta mensagem é trazer_final. A tabela que foi consultada é a {tabela}.
 """
