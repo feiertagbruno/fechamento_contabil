@@ -280,6 +280,7 @@ def query_requisicoes():
 SELECT TRIM(D3_COD) Item,
     TRIM(B1_DESC) Descricao,
     TRIM(B1_TIPO) Tipo,
+    TRIM(D3_LOCAL) Armz,
     TRIM(
         CASE
             WHEN LEFT(D3_DOC,3) = 'DMI' THEN 'DMI'
@@ -332,7 +333,7 @@ WHERE D3.D_E_L_E_T_ = ''
         OR (B1_TIPO = 'PI' AND D3_DOC = 'INVENT')
     )
     AND D3_LOCAL BETWEEN '01' AND '50'
-GROUP BY D3_COD, B1_DESC, B1_TIPO,
+GROUP BY D3_COD, B1_DESC, B1_TIPO, D3_LOCAL,
     CASE
         WHEN LEFT(D3_DOC,3) = 'DMI' THEN 'DMI'
         WHEN D3_DOC = 'INVENT' THEN 'INVENT'

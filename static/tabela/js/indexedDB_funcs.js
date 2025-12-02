@@ -1,4 +1,6 @@
-import * as XLSX from "https://cdn.sheetjs.com/xlsx-latest/package/xlsx.mjs";
+import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
+// https://cdn.sheetjs.com/xlsx-latest/package/xlsx.mjs
+// https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm
 
 let versao_iDB = 2
 

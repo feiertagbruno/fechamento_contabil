@@ -5,6 +5,7 @@ import { div, funcao_fetch, getAnoMesAtual, getMesNome,
   input_element, inserir_tres_pontinhos, label, 
   mesAnterior, style, validacao_dados_do_fetch
 } from "./global_functions.js"
+import { pegar_versao_iDB, salvar_ou_adicionar_no_indexedDB } from "./indexedDB_funcs.js"
 
 const valid = {}
 const funcoes_chamadas = {}
@@ -194,7 +195,8 @@ async function trazer_inicial(per) {
     per = mesAnterior(per)
     
     const response = await funcao_fetch("trazer_inicial",{
-      periodo:per
+      periodo:per,
+      per_atual:per_atual
     })
     const dados = await response.json()
 
@@ -204,7 +206,14 @@ async function trazer_inicial(per) {
       new Mensagem_Temporaria("temp_info", "A consulta (Inicial) retornou vazia.")
       return
     }
-
+    console.log(dados.iniciais)
+    salvar_ou_adicionar_no_indexedDB(
+      "fechamento",pegar_versao_iDB(true),
+      dados.iniciais,
+      "iniciais",[
+        ["per_tipo",["per_atual","Tipo"]]
+      ]
+    )
     
     tipos.map(async (tp) => {
       const base_tp = dados.iniciais

@@ -46,6 +46,7 @@ def trazer_entradas(request):
 @api_view(["POST"])
 def trazer_inicial(request):
     periodo = request.data.get("periodo")
+    per_atual = request.data.get("per_atual","")
 
     if not periodo or not re.match(r"^20\d{2}-[01]\d$",periodo):
         return Response({"erro":f"Período {periodo} é inválido"})
@@ -58,7 +59,9 @@ def trazer_inicial(request):
 
     if consulta.empty:
         return Response({"sucesso":True,"vazio":True})
+
     consulta["periodo"] = periodo
+    consulta["per_atual"] = per_atual
     consulta = consulta.to_dict("records")
 
     return Response({"sucesso": True,"iniciais":consulta})
